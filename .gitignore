@@ -1,4 +1,4 @@
 /.DS_Store
 /__pycache__
-/venv/.
-/sr_web_vuln/__pycache__
+/venv/
+/sr_web_vuln/__pycache__/
