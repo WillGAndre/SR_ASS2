@@ -1,0 +1,17 @@
+SR VULN WEB:
+
+(Notice the .flaskenv var used to reference website.py)
+
+To start web server -> flask run
+
+To init db -> flask db init (creates migration repo)
+Push changes done to table/db -> flask db migrate -m "<msg>"
+Commit changes to db (sync) -> flask db upgrade
+    \
+     -> To undo last migration: flask db downgrade
+
+Open flask app shell (with imports) -> flask shell
+
+                    *---*
+
+https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
