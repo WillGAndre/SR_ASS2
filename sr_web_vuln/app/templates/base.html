@@ -64,6 +64,9 @@
                     <nav class="navbar navbar-light navbar-expand bg-white shadow mb-4 topbar static-top">
                         <div class="container-fluid">
                             <span>User: {{current_user.username}}</span>
+                            <span style="margin-left: 2%;">
+                                <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
+                            </span>
                             <ul class="nav navbar-nav flex-nowrap ml-auto">
                                 <div class="d-none d-sm-block topbar-divider"></div>
                                 <div class="nav-item dropdown no-arrow">
