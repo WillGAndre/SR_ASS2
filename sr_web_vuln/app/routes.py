@@ -13,10 +13,6 @@ import os
 
 api_url = "http://127.0.0.1:5000/"
 
-#
-#   Add routes
-#
-
 @app.route('/')
 @app.route('/index')
 @login_required
@@ -101,7 +97,6 @@ def uploader():
         return redirect(request.url)
 
     if file:
-        # filename = file.filename
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
         posts = [
             {'author': user, 'title': 'Test title post #1', 'body': 'Test post #1'},
@@ -115,3 +110,12 @@ def uploader():
 @app.route('/display/<filename>')
 def display(filename):
     return redirect(url_for('static', filename='uploads/'+filename), code=301)
+
+
+@app.route('/subscribe')
+def subscribe():
+    user = User.query.filter_by(username=current_user.username).first_or_404()
+    user.role = "subscriber"
+    db.session.flush()
+    db.session.commit()
+    return redirect(url_for('user', username=current_user.username), code=301)
