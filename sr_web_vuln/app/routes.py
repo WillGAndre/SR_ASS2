@@ -6,10 +6,10 @@ from app.models import User
 from flask_login import logout_user, login_required
 from flask import request
 from werkzeug.urls import url_parse
-# import requests
-# import json
+import requests
+import json
 
-api_url = "http://127.0.0.1:5000/"
+api_url = "http://127.0.0.1:5050/"
 
 #
 #   Add routes
@@ -65,3 +65,30 @@ def register():
         flash('Congratulations, you are now a registered user!', "success")
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
+
+
+
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# BLOG POST RELATED ROUTES
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+
+# GET request to API for all public blog posts
+@app.route('/explore')
+@login_required
+def explore():
+    posts_array = []
+
+    try:
+        pass
+        # response = requests.get(api_url + "blog_posts")
+        # response_json = response.json()
+        # for post_json in response_json:
+        #     post = BlogPost()
+        #     post.from_dict(post_json)
+        #     posts_array.append(post)      
+    except Exception:
+        return render_template('404.html')
+
+    return render_template("explore.html", posts=posts_array)
