@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
+from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -19,3 +19,10 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
             raise ValidationError('Please use a different username.')
+        
+        
+class PostCreation(FlaskForm):
+    title = StringField('Title...', validators=[DataRequired()])
+    body = StringField('Content...', validators=[DataRequired()])
+    visibility = StringField('Public or Private', validators=[DataRequired()])
+    submit = SubmitField('Register')

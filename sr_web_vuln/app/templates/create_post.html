@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-12 col-xl-10">
+            <div class="card shadow-lg o-hidden border-0 my-5">
+                <div class="card-body p-0">
+                    <div class="row">
+                        <div class="col">
+                            <div class="p-5">
+                                <h1>Create New Post</h1>
+                                <br>
+                                {% if error %}
+                                <div class="alert alert-danger">
+                                    <strong>Error:</strong> {{ error }}
+                                </div>
+                                {% endif %}
+
+                                <br>
+                                <form action="" method="post" novalidate>
+                                    {{ form.hidden_tag() }}
+                                    <div class="form-group">
+                                        <input
+                                            class="form-control form-control-user"
+                                            type="text"
+                                            id="title"
+                                            aria-describedby="Title"
+                                            placeholder="Title..."
+                                            name="title"
+                                            value="{{ request.form.title }}"
+                                        />
+                                        {% for error in form.title.errors %}
+                                        <span style="color: red;">[{{ error }}]</span>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea 
+                                            class="form-control form-control-user"
+                                            type="text"
+                                            id="body"
+                                            placeholder="Content..."
+                                            name="body"
+                                            value="{{request.form.body }}"
+                                            rows="6"
+                                        ></textarea>
+
+                                        {% for error in form.body.errors %}
+                                        <span style="color: red;">[{{ error }}]</span>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="form-group">
+                                        <input 
+                                            class="form-control form-control-user"
+                                            type="text"
+                                            id="visibility"
+                                            placeholder="public or private"
+                                            name="visibility"
+                                            value="{{request.form.visibility }}"
+                                        ></input>
+
+                                        {% for error in form.visibility.errors %}
+                                        <span style="color: red;">[{{ error }}]</span>
+                                        {% endfor %}
+                                    </div>
+                                    <button
+                                        class="btn btn-primary btn-block text-white btn-user"
+                                        type="submit">
+                                        Create Post
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

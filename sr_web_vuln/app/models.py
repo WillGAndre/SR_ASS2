@@ -21,6 +21,9 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def set_role(self, role):
+        self.role = role
+
 
 # blogpost model
 class BlogPost(db.Model):
@@ -29,7 +32,9 @@ class BlogPost(db.Model):
     body = db.Column(db.String(200))
     date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-
+    visibility = db.Column(db.String(10))
+    edited = db.Column(db.String(3))
+    
     def __repr__(self):
         return '<BlogPost {}>'.format(self.title)
 
@@ -38,13 +43,13 @@ class BlogPost(db.Model):
             'id': self.id,
             'title': self.title,
             'body': self.body,
-            'date': self.date,
-            'user_id': self.user_id
+            'user_id': self.user_id,
+            'visibility': self.visibility
         }
         return data
 
     def from_dict(self, data):
-        for field in ['id', 'title', 'body', 'date', 'user_id']:
+        for field in ['id', 'title', 'body', 'date', 'user_id', 'visibility', 'edited']:
             if field in data:
                 setattr(self, field, data[field])
 
