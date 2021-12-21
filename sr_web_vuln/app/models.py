@@ -21,6 +21,9 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def set_role(self, role):
+        self.role = role
+
 
 # blogpost model
 class BlogPost(db.Model):
