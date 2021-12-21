@@ -1,5 +1,5 @@
 from datetime import datetime
-from app import db
+from app import db, ma
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import login
@@ -52,6 +52,12 @@ class BlogPost(db.Model):
         for field in ['id', 'title', 'body', 'date', 'user_id', 'visibility', 'edited']:
             if field in data:
                 setattr(self, field, data[field])
+
+
+class PostSchema(ma.Schema):
+    class Meta:
+        fields = ('id', 'title', 'body', 'date', 'user_id', 'visibility', 'edited')
+
 
 @login.user_loader
 def load_user(id):

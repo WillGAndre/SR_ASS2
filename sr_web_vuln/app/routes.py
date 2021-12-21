@@ -1,9 +1,9 @@
-from flask import render_template, flash, redirect, url_for
-import flask
+from flask import render_template, flash, redirect, url_for, jsonify
 from app import app, db
 from app.forms import LoginForm, PostCreation, RegistrationForm
 from flask_login import current_user, login_user
-from app.models import User, BlogPost
+from app.models import User, BlogPost, PostSchema
+from app.errors import forbidden
 from flask_login import logout_user, login_required
 from flask import request
 from werkzeug.urls import url_parse
@@ -11,11 +11,13 @@ import requests
 import json
 import os
 
-api_url = "http://127.0.0.1:5050/"
+api_url = "http://127.0.0.1:5000/"
+post_schema = PostSchema()
+posts_schema = PostSchema(many=True) 
 
 @app.route('/')
 @app.route('/index')
-@login_required
+# @login_required
 def index():
     pass
 
@@ -63,81 +65,6 @@ def register():
         flash('Congratulations, you are now a registered user!', "success")
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
-
-#----------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------
-# BLOG POST RELATED ROUTES
-#----------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------
-
-# GET request to API for all public blog posts
-@app.route('/explore')
-@login_required
-def explore():
-    posts_array = []
-
-    try:
-        response = requests.get(api_url + "blog_posts")
-        response_json = response.json()
-        for post_json in response_json:
-            post = BlogPost()
-            post.from_dict(post_json)
-            posts_array.append(post)      
-    except Exception:
-        return render_template('404.html')
-
-    return render_template("explore.html", posts=posts_array)
-
-# GET request to API for all blog posts from user
-@app.route('/my_posts')
-@login_required
-def my_posts():
-    posts_array = []
-
-    try:
-        pass
-        # response = requests.get(api_url + "blog_posts")
-        # response_json = response.json()
-        # for post_json in response_json:
-        #     post = BlogPost()
-        #     post.from_dict(post_json)
-        #     posts_array.append(post)      
-    except Exception:
-        return render_template('404.html')
-
-    return render_template("explore.html", posts=posts_array)
-
-# POST request to API to create new post
-@app.route('/create_post',  methods=['GET', 'POST'])
-@login_required
-def create_post():
-    form = PostCreation()
-    if form.validate_on_submit():
-        title = form.title.data
-        body = form.body.data
-        visibility = form.visibility.data
-        # get user id
-        
-        post = BlogPost()
-        post.title = title
-        post.body = body
-        post.visibility = visibility
-        post.user_id = 1
-        post_data = json.dumps(post.to_dict())
-        
-        try:
-            headers = {'Content-type': 'application/json'}
-            response = requests.post(api_url + "blog_post", data=post_data, headers=headers)
-            if response.status_code == 403:
-                error = "Post invalid!"
-                return render_template('create_post.html', form=form, error=error)
-        except Exception:
-            return render_template('404.html')
-        
-        flash("New post created with success (Title: " + title + ")", "success")
-        return redirect(url_for('explore'))
-        
-    return render_template("create_post.html", form=form)
 
 # Profile page
 @app.route('/user/<username>')
@@ -193,3 +120,155 @@ def subscribe():
     db.session.flush()
     db.session.commit()
     return redirect(url_for('user', username=current_user.username), code=301)
+
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# WEB SERVER: BLOG POST RELATED ROUTES
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+
+# GET request to API for all public blog posts
+@app.route('/explore')
+@login_required
+def explore():
+    posts_array = []
+
+    try:
+        response = requests.get(api_url + "blog_posts")
+        response_json = response.json()
+        for post_json in response_json:
+            post = BlogPost()
+            post.from_dict(post_json)
+            posts_array.append(post)      
+    except Exception:
+        return render_template('404.html')
+
+    return render_template("explore.html", posts=posts_array)
+
+# GET request to API for all blog posts from user
+@app.route('/my_posts')
+@login_required
+def my_posts():
+    posts_array = []
+
+    try:
+        user = db.session().query(User).filter_by(username=current_user.username).first()
+        response = requests.get(api_url + "blog_posts/"+str(int(user.id)))
+        response_json = response.json()
+        for post_json in response_json:
+            post = BlogPost()
+            post.from_dict(post_json)
+            posts_array.append(post)
+    except Exception:
+        return render_template('404.html')
+
+    return render_template("explore.html", posts=posts_array)
+
+# POST request to API to create new post
+@app.route('/create_post',  methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostCreation()
+    if form.validate_on_submit():
+        title = form.title.data
+        body = form.body.data
+        visibility = form.visibility.data
+        user = db.session().query(User).filter_by(username=current_user.username).first()
+
+        post = {
+            'title': title,
+            'body': body,
+            'user_id': int(user.id),
+            'visibility': visibility
+        }
+        post_data = json.dumps(post)
+        
+        try:
+            headers = {'Content-type': 'application/json'}
+            response = requests.post(api_url + "blog_post", data=post_data, headers=headers)
+            if response.status_code == 403:
+                error = "Post invalid!"
+                return render_template('create_post.html', form=form, error=error)
+        except Exception:
+            return render_template('404.html')
+
+        flash("New post created with success (Title: " + title + ")", "success")
+        return redirect(url_for('explore'))
+        
+    return render_template("create_post.html", form=form)
+
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# API: BLOG POST RELATED ROUTES
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+
+# TODO: Tokens + CORS
+# SEARCH: JWT vuln
+#         CORS vuln
+
+@app.route("/blog_post", methods=["POST"])
+def create_blog_post():
+    try:
+        data = request.get_json()
+        if (data['visibility'] != 'private' and data['visibility'] != 'public'):
+            return forbidden()
+        post = BlogPost()
+        post.title = data['title']
+        post.body = data['body']
+        post.visibility = data['visibility']
+        post.user_id = data['user_id']
+        db.session.add(post)
+        db.session.commit()
+        return jsonify({"data": {"message": "Valid Post"}}), 200
+    except Exception:
+        print('Error reading data')
+        return forbidden()
+
+# get blog post by id
+@app.route("/blog_post/<blog_post_id>", methods=["GET"])
+def get_blog_post(blog_post_id):
+    post = BlogPost.query.get(blog_post_id)
+    result = posts_schema.dump(post)
+    
+    return jsonify(result), 200
+
+# edit blog post
+@app.route("/blog_post/<blog_post_id>", methods=["PUT"])
+def edit_blog_post(blog_post_id):
+    post = BlogPost.query.get(blog_post_id)
+    
+    post.body = request.json['body']
+    post.visibility = request.json['visibility']
+    post.edited = "yes"
+    
+    db.session.commit()
+    
+    return post_schema.jsonify(post), 200
+
+# delete blog post
+@app.route("/blog_post/<blog_post_id>", methods=["DELETE"])
+def delete_blog_post(blog_post_id):
+    post = BlogPost.query.get(blog_post_id)
+    
+    db.session.delete(post)
+    db.session.commit()
+    
+    return post_schema.jsonify(post), 200
+
+# get all public blog posts (explore page)
+@app.route("/blog_posts", methods=["GET"])
+def get_public_blog_posts():
+    all_public_posts = BlogPost.query.filter_by(visibility='public')
+    result = posts_schema.dump(all_public_posts)
+    
+    return jsonify(result), 200
+
+# get all blog posts from user (private and public)
+@app.route("/blog_posts/<user_id>", methods=["GET"])
+def get_my_blog_posts(user_id):
+    all_posts = BlogPost.query.filter_by(user_id=user_id)
+    result = posts_schema.dump(all_posts)
+    
+    return jsonify(result), 200
+
