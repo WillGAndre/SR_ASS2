@@ -26,6 +26,61 @@
     </div>
 
     
+    {% else %}
+    <div class="container">
+        <h1>Posts from our users</h1>
+        <br>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "success" %}  
+                    <div class="alert alert-{{category}}">
+                        <b>Success: </b>{{ message }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <b>Error: </b>{{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="col">
+                <div class="card-columns">
+                {% for post in posts %}
+                    <div class="card border-dark h-auto" style="max-height: 50rem; min-width: 18rem;">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                Author: Colocar autor // TODO
+                                <br>
+                                Title: {{post.title}}
+                            </h4>
+                            <p class="card-text">
+                                {% if post.edited == "yes" %}
+                                (Edited)
+                                {% endif%}
+                                <br>
+                                Content: {{post.body}}
+                            </p>
+                            <p class="card-text">
+                                Date: {{post.date}}
+                            </p>
+                            {% comment %} 
+                            <button
+                                class="btn btn-primary w-100 m-1"
+                                type="button"
+                                onclick="window.location.href='{{ url_for('trip_data', id=trip.id) }}';">
+                                View Post
+                            </button> 
+                            {% endcomment %}
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+      </div>
       {% endif %}
 
 

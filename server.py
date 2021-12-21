@@ -8,16 +8,17 @@ from flask_marshmallow import Marshmallow
 
 #app
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sqlitedb.file"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = 0
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-#sqlite3 config (enforce foreign key constraints)
-@event.listens_for(Engine, "connect")
-def _set_sqlite_pragma(dbapi_connection, connection_record):
-    if isinstance(dbapi_connection, SQLite3Connection):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON;")
-        cursor.close()
+
+# #sqlite3 config (enforce foreign key constraints)
+# @event.listens_for(Engine, "connect")
+# def _set_sqlite_pragma(dbapi_connection, connection_record):
+#     if isinstance(dbapi_connection, SQLite3Connection):
+#         cursor = dbapi_connection.cursor()
+#         cursor.execute("PRAGMA foreign_keys=ON;")
+#         cursor.close()
 
 db = SQLAlchemy(app)
 dt_now = datetime.now()
@@ -93,26 +94,29 @@ def get_user(user_id):
 
 
 
-# -------------------------------- #
-#           BLOG POSTS             #
-# -------------------------------- #
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# BLOG POSTS
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 
 # create new blog post
 @app.route("/blog_post", methods=["POST"])
-def create_blog_post(user_id):
+def create_blog_post():
     
     # fields
     title = request.json['title']
     body = request.json['body']
     date = datetime.now()
-    #user_id = request.json['user_id']
+    user_id = request.json['user_id']
     visibility = request.json['visibility']
+    edited = "no"
     
     if(visibility != 'private' and visibility != 'public'):
         return forbidden()
     
     try:
-        new_post =  BlogPost(title, body, date, user_id, visibility)
+        new_post =  BlogPost(title, body, date, user_id, visibility, edited)
         
         db.session.add(new_post)
         db.session.commit()
@@ -155,7 +159,7 @@ def get_public_blog_posts():
 # get all blog posts from user (private and public)
 @app.route("/blog_posts/<user_id>", methods=["GET"])
 def get_my_blog_posts(user_id):
-    all_posts = BlogPost.all() # add user
+    all_posts = BlogPost.query.filter_by(user_id=user_id)
     result = posts_schema.dump(all_posts)
     
     return jsonify(result)
@@ -169,10 +173,11 @@ def get_blog_post(blog_post_id):
     return jsonify(result)
 
 
-# -------------------------------- #
-#               ERRORS             #
-# -------------------------------- #
-
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# ERRORS
+#----------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
 @app.errorhandler(404)
 def page_not_found():
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
@@ -180,6 +185,9 @@ def page_not_found():
 @app.errorhandler(403)
 def forbidden():
     return "<h1>403</h1><p>Forbidden</p>", 403
+
+
+
 
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5050, debug=True)
