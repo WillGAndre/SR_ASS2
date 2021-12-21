@@ -19,3 +19,10 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
             raise ValidationError('Please use a different username.')
+        
+        
+class PostCreation(FlaskForm):
+    title = StringField('Title...', validators=[DataRequired()])
+    body = StringField('Content...', validators=[DataRequired()])
+    visibility = StringField('Public or Private', validators=[DataRequired()])
+    submit = SubmitField('Register')
