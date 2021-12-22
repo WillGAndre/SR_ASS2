@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db, ma
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from flask_login import UserMixin
 from app import login
 
@@ -11,19 +11,30 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(50), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     posts = db.relationship("BlogPost")
+    token = db.Column(db.String(128), index=True, unique=True)
+    token_exp = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'username': self.username,
+            'role': self.role,
+            'token': self.token,
+            'token_exp': self.token_exp
+        }
+        return data
 
     def set_role(self, role):
         self.role = role
 
+    def jwt_payload(self):
+        return {"id": self.id, "exp": self.token_exp, "role": self.role}
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
 # blogpost model
 class BlogPost(db.Model):
