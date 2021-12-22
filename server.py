@@ -18,12 +18,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # #sqlite3 config (enforce foreign key constraints)
-# @event.listens_for(Engine, "connect")
-# def _set_sqlite_pragma(dbapi_connection, connection_record):
-#     if isinstance(dbapi_connection, SQLite3Connection):
-#         cursor = dbapi_connection.cursor()
-#         cursor.execute("PRAGMA foreign_keys=ON;")
-#         cursor.close()
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, SQLite3Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
 
 #               *----*
 
@@ -111,7 +111,6 @@ class PostSchema(ma.Schema):
 post_schema = PostSchema()
 posts_schema = PostSchema(many=True) 
 
-
 #               *----*
 
 basic_auth = HTTPBasicAuth()
@@ -185,9 +184,6 @@ def get_user(user_id):
     if user:
         return jsonify({"message": user.to_dict()}), 200
     return jsonify({"error": "User not found"}), 500
-
-
-
 
 
 #----------------------------------------------------------------------------------------
@@ -274,6 +270,7 @@ def get_blog_post(blog_post_id):
 # ERRORS
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
+
 @app.errorhandler(404)
 def page_not_found():
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
@@ -281,8 +278,6 @@ def page_not_found():
 @app.errorhandler(403)
 def forbidden():
     return "<h1>403</h1><p>Forbidden</p>", 403
-
-
 
 
 #               *----*

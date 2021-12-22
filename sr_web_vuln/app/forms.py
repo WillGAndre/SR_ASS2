@@ -26,3 +26,8 @@ class PostCreation(FlaskForm):
     body = StringField('Content...', validators=[DataRequired()])
     visibility = StringField('Public or Private', validators=[DataRequired()])
     submit = SubmitField('Register')
+    
+class PostEdit(FlaskForm):
+    body = StringField('Content...', validators=[DataRequired()])
+    visibility = StringField('Public or Private', validators=[DataRequired()])
+    submit = SubmitField('Register')

@@ -1,0 +1,4 @@
+flask-marshmallow
+Flask-HTTPAuth
+PyJWT
+httpie
