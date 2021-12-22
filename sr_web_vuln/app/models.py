@@ -41,8 +41,9 @@ class BlogPost(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(50))
     body = db.Column(db.String(200))
-    date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    date = db.Column(db.String(50))
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
+    username = db.Column(db.String(50))
     visibility = db.Column(db.String(10))
     edited = db.Column(db.String(3))
     
@@ -55,19 +56,20 @@ class BlogPost(db.Model):
             'title': self.title,
             'body': self.body,
             'user_id': self.user_id,
+            'username': self.username,
             'visibility': self.visibility
         }
         return data
 
     def from_dict(self, data):
-        for field in ['id', 'title', 'body', 'date', 'user_id', 'visibility', 'edited']:
+        for field in ['id', 'title', 'body', 'date', 'user_id', 'username', 'visibility', 'edited']:
             if field in data:
                 setattr(self, field, data[field])
 
 
 class PostSchema(ma.Schema):
     class Meta:
-        fields = ('id', 'title', 'body', 'date', 'user_id', 'visibility', 'edited')
+        fields = ('id', 'title', 'body', 'date', 'user_id', 'username', 'visibility', 'edited')
 
 
 @login.user_loader
