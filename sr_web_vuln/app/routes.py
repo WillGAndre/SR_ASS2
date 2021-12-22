@@ -1,5 +1,8 @@
+from datetime import datetime
 from flask import render_template, flash, redirect, url_for, jsonify
 from app import app, db
+from app.forms import LoginForm, PostCreation, RegistrationForm, PostEdit
+from flask_login import current_user, login_user
 from app.forms import LoginForm, PostCreation, RegistrationForm
 from app.auth import verify_password, verify_token, token_auth, \
     basic_auth, gen_token, ws_auth_verify_password, ws_auth_verify_token
@@ -126,6 +129,8 @@ def subscribe():
 #----------------------------------------------------------------------------------------
 
 # GET request to API for all public blog posts
+@app.route('/')
+@app.route('/index')
 @app.route('/explore')
 def explore():
     posts_array = []
@@ -158,7 +163,7 @@ def my_posts():
     except Exception:
         return render_template('404.html')
 
-    return render_template("explore.html", posts=posts_array)
+    return render_template("my_posts.html", posts=posts_array)
 
 # POST request to API to create new post
 @app.route('/create_post',  methods=['GET', 'POST'])
@@ -174,6 +179,7 @@ def create_post():
             'title': title,
             'body': body,
             'user_id': int(user.id),
+            'username': current_user.username,
             'visibility': visibility
         }
         post_data = json.dumps(post)
@@ -191,6 +197,60 @@ def create_post():
         return redirect(url_for('explore'))
         
     return render_template("create_post.html", form=form)
+
+
+# PUT request to API to edit post
+@app.route('/post_update/<id>',  methods=['GET', 'POST'])
+@login_required
+def post_update(id):
+
+    # check if user can do this (by id, token...)
+    # vulnerable and not vulnerable
+    # IDEA: check if user can do this by checking user's id, if it matches with the user_id in the post, proceed (can we manipulate this to be vulnerable)
+    # IDEA: send user id in request body -> it allows any user to forge the request body and edit other's posts (vulnerable)
+    
+    post = db.session().query(BlogPost).filter_by(id=id).first()
+    
+    form = PostEdit()
+    if form.validate_on_submit():
+        body = form.body.data
+        visibility = form.visibility.data
+
+        post = {
+            'body': body,
+            'visibility': visibility
+        }
+        post_data = json.dumps(post)
+        
+        try:
+            headers = {'Content-type': 'application/json'}
+            response = requests.put(api_url + "blog_post/" + id, data=post_data, headers=headers)
+            if response.status_code == 403:
+                error = "Post invalid!"
+                return render_template('create_post.html', post=post, form=form, error=error)
+        except Exception:
+            return render_template('404.html')
+    
+        flash("Blog Post updated with success", "success")
+        return redirect(url_for('my_posts'))
+
+    return render_template("update_post.html", post=post, form=form)
+
+
+# DELETE request to API to delete post
+@app.route('/post_delete/<id>')
+@login_required
+def post_delete(id):
+
+    # check if user can do this
+
+    try:
+        response = requests.delete(api_url + "blog_post/" + id)
+    except Exception:
+        return render_template('404.html')
+    
+    flash("Blog Post deleted with success", "success")
+    return redirect(url_for('my_posts'))
 
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
@@ -222,6 +282,10 @@ def create_blog_post():
         post.body = data['body']
         post.visibility = data['visibility']
         post.user_id = data['user_id']
+        post.username = data['username']
+        date = datetime.utcnow()
+        post.date = date.strftime("%H:%M:%S %b %d %Y")
+        
         db.session.add(post)
         db.session.commit()
         return jsonify({"data": {"message": "Valid Post"}}), 200

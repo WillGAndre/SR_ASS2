@@ -28,7 +28,7 @@
     
     {% else %}
     <div class="container">
-        <h1>Posts from our users</h1>
+        <h1>Your Posts</h1>
         <br>
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -66,6 +66,18 @@
                                 <br>
                                 Date: {{post.date}}
                             </p>
+                            <button
+                                class="btn btn-primary w-100 m-1"
+                                type="button"
+                                onclick="window.location.href='{{ url_for('post_update', id=post.id) }}';">
+                                Edit Post
+                            </button>
+                            <button
+                                class="btn btn-danger w-100 m-1"
+                                type="button"
+                                onclick="window.location.href='{{ url_for('post_delete', id=post.id) }}';">
+                                Delete Post
+                            </button>
                         </div>
                     </div>
                     <br>
