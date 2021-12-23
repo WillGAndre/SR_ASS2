@@ -28,11 +28,6 @@ def favicon():
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
-@app.route('/')
-@app.route('/index')
-def index():
-    return redirect(url_for('explore'), code=301)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -76,14 +71,10 @@ def register():
 @app.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {'author': user, 'title': 'Test title post #1', 'body': 'Test post #1'},
-        {'author': user, 'title': 'Test title post #2', 'body': 'Test post #2'}
-    ]
     filename = os.path.join(app.config['UPLOAD_FOLDER'], username)
     if (os.path.exists(filename)):
-        return render_template('user.html', user=user, posts=posts, filename=username)
-    return render_template('user.html', user=user, posts=posts)
+        return render_template('user.html', user=user, filename=username)
+    return render_template('user.html', user=user)
 
 @app.route('/upload')
 def upload():
@@ -100,11 +91,7 @@ def uploader():
 
     if file:
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], current_user.username))
-        posts = [
-            {'author': user, 'title': 'Test title post #1', 'body': 'Test post #1'},
-            {'author': user, 'title': 'Test title post #2', 'body': 'Test post #2'}
-        ]
-        return render_template('user.html', user=current_user, posts=posts, filename=current_user.username)
+        return render_template('user.html', user=current_user, filename=current_user.username)
     else:
         return redirect(request.url)
 
