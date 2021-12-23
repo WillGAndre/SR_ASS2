@@ -1,11 +1,13 @@
+from datetime import datetime, timedelta
+
+import jwt
+import requests
+from flask import jsonify
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from werkzeug.security import check_password_hash
+
 from app import app, db
 from app.models import User
-from flask import jsonify
-from datetime import datetime, timedelta
-import requests
-import jwt
 
 api_url = "http://127.0.0.1:5000/"
 jwt_secret = 'secret_is_secret'

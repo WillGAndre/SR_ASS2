@@ -1,17 +1,19 @@
-from datetime import datetime
-from flask import render_template, flash, redirect, url_for, jsonify, request
-from app import app, db
-from flask_login import current_user, login_user, login_required
-from app.forms import LoginForm, PostCreation, RegistrationForm, PostEdit
-from app.auth import verify_password, verify_token, token_auth, \
-    basic_auth, gen_token, ws_auth_verify_password, ws_auth_verify_token
-from flask_login import current_user, login_user, logout_user
-from app.models import User, BlogPost, PostSchema
-from app.errors import forbidden
-from werkzeug.urls import url_parse
-import requests
 import json
 import os
+from datetime import datetime
+
+import requests
+from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+from werkzeug.urls import url_parse
+
+from app import app, db
+from app.auth import (basic_auth, gen_token, token_auth, verify_password,
+                      verify_token, ws_auth_verify_password,
+                      ws_auth_verify_token)
+from app.errors import forbidden
+from app.forms import LoginForm, PostCreation, PostEdit, RegistrationForm
+from app.models import BlogPost, PostSchema, User
 
 api_url = "http://127.0.0.1:5000/"
 post_schema = PostSchema()
@@ -121,7 +123,7 @@ def explore():
     posts_array = []
 
     try:
-        response = requests.get(api_url + "blog_posts")
+        response = requests.get(api_url + "api/blog_posts")
         response_json = response.json()
         for post_json in response_json:
             post = BlogPost()
@@ -139,7 +141,7 @@ def my_posts():
 
     try:
         user = db.session().query(User).filter_by(username=current_user.username).first()
-        response = requests.get(api_url + "blog_posts/"+str(int(user.id)))
+        response = requests.get(api_url + "api/blog_posts/"+str(int(user.id)))
         response_json = response.json()
         for post_json in response_json:
             post = BlogPost()
@@ -171,7 +173,7 @@ def create_post():
         
         try:
             headers = {'Content-type': 'application/json'}
-            response = requests.post(api_url + "blog_post", data=post_data, headers=headers)
+            response = requests.post(api_url + "api/blog_post", data=post_data, headers=headers)
             if response.status_code == 403:
                 error = "Post invalid!"
                 return render_template('create_post.html', form=form, error=error)
@@ -209,7 +211,7 @@ def post_update(id):
         
         try:
             headers = {'Content-type': 'application/json'}
-            response = requests.put(api_url + "blog_post/" + id, data=post_data, headers=headers)
+            response = requests.put(api_url + "api/blog_post/" + id, data=post_data, headers=headers)
             if response.status_code == 403:
                 error = "Post invalid!"
                 return render_template('create_post.html', post=post, form=form, error=error)
@@ -230,7 +232,7 @@ def post_delete(id):
     # check if user can do this
 
     try:
-        response = requests.delete(api_url + "blog_post/" + id)
+        response = requests.delete(api_url + "api/blog_post/" + id)
     except Exception:
         return render_template('404.html')
     
@@ -243,8 +245,6 @@ def post_delete(id):
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
-# TODO: CORS
-#   - Change API routes to: '/api/...'
 # CORS:
 #   - https://flask-cors.readthedocs.io/en/latest/
 #   - https://stackoverflow.com/questions/25594893/how-to-enable-cors-in-flask
@@ -256,7 +256,7 @@ def post_delete(id):
 #   - Add @token_auth.login_required to API methods that need token auth (IN HEADER --> "Authorization:Bearer <token>")
 #   - Add @basic_auth.login_required to API methods that need basic auth (<username>:<password>)
 
-@app.route("/blog_post", methods=["POST"])
+@app.route("/api/blog_post", methods=["POST"])
 def create_blog_post():
     try:
         data = request.get_json()
@@ -279,7 +279,7 @@ def create_blog_post():
         return forbidden()
 
 # get blog post by id
-@app.route("/blog_post/<blog_post_id>", methods=["GET"])
+@app.route("/api/blog_post/<blog_post_id>", methods=["GET"])
 def get_blog_post(blog_post_id):
     post = BlogPost.query.get(blog_post_id)
     result = posts_schema.dump(post)
@@ -287,7 +287,7 @@ def get_blog_post(blog_post_id):
     return jsonify(result), 200
 
 # edit blog post
-@app.route("/blog_post/<blog_post_id>", methods=["PUT"])
+@app.route("/api/blog_post/<blog_post_id>", methods=["PUT"])
 def edit_blog_post(blog_post_id):
     post = BlogPost.query.get(blog_post_id)
     
@@ -300,7 +300,7 @@ def edit_blog_post(blog_post_id):
     return post_schema.jsonify(post), 200
 
 # delete blog post
-@app.route("/blog_post/<blog_post_id>", methods=["DELETE"])
+@app.route("/api/blog_post/<blog_post_id>", methods=["DELETE"])
 def delete_blog_post(blog_post_id):
     post = BlogPost.query.get(blog_post_id)
     
@@ -310,7 +310,7 @@ def delete_blog_post(blog_post_id):
     return post_schema.jsonify(post), 200
 
 # get all public blog posts (explore page)
-@app.route("/blog_posts", methods=["GET"])
+@app.route("/api/blog_posts", methods=["GET"])
 def get_public_blog_posts():
     all_public_posts = BlogPost.query.filter_by(visibility='public')
     result = posts_schema.dump(all_public_posts)
@@ -318,7 +318,7 @@ def get_public_blog_posts():
     return jsonify(result), 200
 
 # get all blog posts from user (private and public)
-@app.route("/blog_posts/<user_id>", methods=["GET"])
+@app.route("/api/blog_posts/<user_id>", methods=["GET"])
 def get_my_blog_posts(user_id):
     all_posts = BlogPost.query.filter_by(user_id=user_id)
     result = posts_schema.dump(all_posts)
