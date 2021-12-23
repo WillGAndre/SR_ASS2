@@ -1,15 +1,13 @@
 from datetime import datetime
-from flask import render_template, flash, redirect, url_for, jsonify
+from flask import render_template, flash, redirect, url_for, jsonify, request
 from app import app, db
+from flask_login import current_user, login_user, login_required
 from app.forms import LoginForm, PostCreation, RegistrationForm, PostEdit
-from flask_login import current_user, login_user
-from app.forms import LoginForm, PostCreation, RegistrationForm
 from app.auth import verify_password, verify_token, token_auth, \
     basic_auth, gen_token, ws_auth_verify_password, ws_auth_verify_token
 from flask_login import current_user, login_user, logout_user
 from app.models import User, BlogPost, PostSchema
 from app.errors import forbidden
-from flask import request
 from werkzeug.urls import url_parse
 import requests
 import json
