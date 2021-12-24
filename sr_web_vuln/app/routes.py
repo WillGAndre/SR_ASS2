@@ -247,8 +247,6 @@ def post_delete(id):
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
-# TODO: #3 **JWT Privilege Escalation**
-#       Implement CORS + vulns
 # CORS:
 #   - https://flask-cors.readthedocs.io/en/latest/
 #   - https://stackoverflow.com/questions/25594893/how-to-enable-cors-in-flask
