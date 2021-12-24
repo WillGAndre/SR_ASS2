@@ -1,0 +1,11 @@
+CORS_vuln:
+    To enable CORS there are two possible methods:
+
+        1. Add ` response.headers.add('Access-Control-Allow-Origin', 'null' / '*') ` to 
+        jsonify response returned by the API.
+
+        2. Import flask_cors and add:
+            cors = CORS(app, resources={r"/api/*": {"origins": "localhost"}})
+        then add @cross_origin() to route that should be enabled cors.
+
+        - https://stackoverflow.com/questions/26980713/solve-cross-origin-resource-sharing-with-flask

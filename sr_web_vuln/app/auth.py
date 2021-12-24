@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 
 import jwt
 import requests
@@ -83,6 +84,9 @@ def token_auth_error():
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
+# This constitutes as a secure method since the token
+# is first verified in the db, then its internal contents
+# are also verified.
 @app.route('/api/auth/check_token/<token>', methods = ['GET'])
 def check_token(token):
     user = User.query.filter_by(token=token).first()
@@ -95,6 +99,23 @@ def check_token(token):
     if token != user.token:
         return jsonify({"user": None}), 401
     return jsonify({"user": user.to_dict()}), 200
+
+# Insecure token verification, assumes default encode algorithm: HS256
+# ---
+# In order for token generation to also be insecure,
+# the payload should be constituted by deterministic variables.
+# ATM, the payload includes the token experation TTL which isn't easily
+# inferred by the attacker. One possibility could be to create a POST
+# vuln_gen_token that accepts as POST arguments the payload of the 
+# future token.
+@app.route('/api/auth/vuln_check_token/<token>', methods = ['GET'])
+def vuln_check_token(token):
+    token_dec = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    user_id = token_dec['id']
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        jsonify({"message": "User not found"}), 401
+    return jsonify(token_dec), 200
 
 @app.route('/api/auth/gen_token/<user_id>', methods = ['GET'])
 def gen_token(user_id, exp_in = 3600):

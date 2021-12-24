@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">  
+        <title>Static Document</title>
+    </head>
+    <body>
+        <h1 id="header1">Hello static document</h1>
+        <script>
+            fetch('http://127.0.0.1:5000/api/blog_posts/1')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(res_json) {
+                console.log(res_json)
+                document.getElementById('header1').innerHTML = res_json[0]['title']
+            });
+        </script>
+    </body>
+</html>

@@ -4,6 +4,7 @@ from datetime import datetime
 
 import requests
 from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask_cors import cross_origin
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 
@@ -245,6 +246,8 @@ def post_delete(id):
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
+# TODO: #3 **JWT Privilege Escalation**
+#       Implement CORS + vulns
 # CORS:
 #   - https://flask-cors.readthedocs.io/en/latest/
 #   - https://stackoverflow.com/questions/25594893/how-to-enable-cors-in-flask
@@ -319,9 +322,11 @@ def get_public_blog_posts():
 
 # get all blog posts from user (private and public)
 @app.route("/api/blog_posts/<user_id>", methods=["GET"])
+# @cross_origin()
 def get_my_blog_posts(user_id):
     all_posts = BlogPost.query.filter_by(user_id=user_id)
     result = posts_schema.dump(all_posts)
-    
-    return jsonify(result), 200
+    response = jsonify(result)
+    # response.headers.add('Access-Control-Allow-Origin', 'null') # '*'
+    return response, 200
 
