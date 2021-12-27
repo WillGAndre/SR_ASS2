@@ -4,7 +4,6 @@ from datetime import datetime
 
 import requests
 from flask import flash, jsonify, redirect, render_template, request, url_for
-from flask_cors import cross_origin
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 
@@ -321,7 +320,6 @@ def get_public_blog_posts():
 
 # get all blog posts from user (private and public)
 @app.route("/api/blog_posts/<user_id>", methods=["GET"])
-# @cross_origin()
 def get_my_blog_posts(user_id):
     all_posts = BlogPost.query.filter_by(user_id=user_id)
     result = posts_schema.dump(all_posts)

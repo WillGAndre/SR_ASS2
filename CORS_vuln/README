@@ -5,4 +5,15 @@ CORS_vuln:
     (reflect is the least secure). For better security whitelists
     should be tighter, including regex.
 
-    TODO: Cross-site scripting (XSS) via CORS
+    Cross-site scripting (XSS) via CORS:
+        There are essentially two ways of doing this:
+
+            1. Create static html page which is susceptible 
+            to XSS. The static html page must allow inline/normal 
+            js script input as a GET or POST. The attacker then
+            inserts malicious requests to the API as js in the input.
+
+
+            2. Create another flask app which allows XSS, 
+            by removing the autoescape option from Jinja
+            (https://github.com/bgres/xss-demo).
