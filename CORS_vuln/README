@@ -6,14 +6,32 @@ CORS_vuln:
     should be tighter, including regex.
 
     Cross-site scripting (XSS) via CORS:
-        There are essentially two ways of doing this:
 
-            1. Create static html page which is susceptible 
+            Create static html page which is susceptible 
             to XSS. The static html page must allow inline/normal 
-            js script input as a GET or POST. The attacker then
+            js input as a GET or POST. The attacker then
             inserts malicious requests to the API as js in the input.
 
+            TODO:
+                # Directory Transversal: Simply downloads files (Attacker-->get env variables, jwt secret key)
+                #   Query Arg: filename
+                #   Insecure - Doesnt verify file ext
+                #   Secure - Verify file ext or directory ext (regex,..)
+    
+         CORS             JS
+    API  ----   static   ----  A
+     |
+    WS
+     |
+     C
 
-            2. Create another flask app which allows XSS, 
-            by removing the autoescape option from Jinja
-            (https://github.com/bgres/xss-demo).
+             --> Should only get user info: Post Count
+            /
+    A <--> Static <-> API requests
+       JS    
+
+    Attacker Goal: Get POSTS from user (public/private)
+    Content-Security-Policy (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy)
+                            (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection)
+
+    (https://github.com/ShiftLeftSecurity/flask-webgoat)

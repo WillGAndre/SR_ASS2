@@ -8,7 +8,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 
 from app import app, db
-from app.cors import _corsify_reflect, _corsify_whitelist, _corsify_regex_whitelist
+from app.cors import _corsify_reflect, _corsify_whitelist, _corsify_regex_whitelist, _corsify_static_xss
 from app.auth import (basic_auth, gen_token, token_auth, verify_password,
                       verify_token, ws_auth_verify_password,
                       ws_auth_verify_token)
@@ -319,14 +319,14 @@ def get_public_blog_posts():
     return jsonify(result), 200
 
 # get all blog posts from user (private and public)
+# CORS route
 @app.route("/api/blog_posts/<user_id>", methods=["GET"])
 def get_my_blog_posts(user_id):
     all_posts = BlogPost.query.filter_by(user_id=user_id)
     result = posts_schema.dump(all_posts)
     response = jsonify(result)
     # CORS Methods:
-    #_corsify_reflect(request, response)
+    _corsify_reflect(request, response)
     #_corsify_whitelist(request, response)
     #_corsify_regex_whitelist(request, response)
     return response, 200
-

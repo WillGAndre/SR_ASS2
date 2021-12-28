@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>  
+        <title>Static XSS</title>
+    </head>
+    <body>
+        <header>
+            <h1>PostMyPost Info</h1>
+        </header>
+        <input id="username" type="text" placeholder="Search user" autocomplete="off" />
+        <input id="get_input" type="submit" value="Search users"/>
+        <script>
+            document.getElementById("get_input").onclick = get_user;
+    
+            function get_user() {
+                let username = document.getElementById("username").value
+                fetch('http://127.0.0.1:5000/api/blog_posts/'+username)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(res_json) {
+                    console.log(res_json)
+                });
+            }
+        </script>
+        <input id="comment_body" type="text" placeholder="Comment" autocomplete="off" />
+        <input id="comment_input" type="submit" value="Submit new comment" />
+        <script>
+            document.getElementById("comment_input").onclick = add_comment;
+
+            function add_comment() {
+                alert("Comment added")
+            }
+        </script>
+    </body>
+</html>
