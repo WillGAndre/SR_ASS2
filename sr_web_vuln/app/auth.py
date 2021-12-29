@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 
+import base64
 import jwt
 import requests
 from flask import jsonify
@@ -11,7 +12,10 @@ from app import app, db
 from app.models import User
 
 api_url = "http://127.0.0.1:5000/"
-jwt_secret = 'secret_is_secret'
+HS256_SECRET = 'secret_is_secret'
+
+RS256_PUB_KEY = open("app/auth/public-key.pem", "r").read()
+RS256_PRV_KEY = open("app/auth/private-key.pem", "r").read()
 
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
@@ -68,7 +72,7 @@ def verify_token(token):
         return None
     token = jwt.encode(
         user.jwt_payload(),
-        jwt_secret
+        HS256_SECRET
     )
     if token != user.token:
         return None
@@ -84,49 +88,73 @@ def token_auth_error():
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
-# This constitutes as a secure method since the token
-# is first verified in the db, then its internal contents
-# are also verified.
+# Default secure auth method
+# ---
+# Assumes default algo: HS256
 @app.route('/api/auth/check_token/<token>', methods = ['GET'])
 def check_token(token):
     user = User.query.filter_by(token=token).first()
     if user is None or user.token_exp < datetime.utcnow():
         return jsonify({"user": None}), 401
-    token = jwt.encode(
-        user.jwt_payload(),
-        jwt_secret
-    )
-    if token != user.token:
-        return jsonify({"user": None}), 401
     return jsonify({"user": user.to_dict()}), 200
 
-# Insecure token verification, assumes default encode algorithm: HS256
+# JWT Introduction - Insecure auth method
 # ---
-# In order for token generation to also be insecure,
-# the payload should be constituted by deterministic variables.
-# ATM, the payload includes the token experation TTL which isn't easily
-# inferred by the attacker. One possibility could be to create a POST
-# vuln_gen_token that accepts as POST arguments the payload of the 
-# future token.
-@app.route('/api/auth/vuln_check_token/<token>', methods = ['GET'])
-def vuln_check_token(token):
-    token_dec = jwt.decode(token, jwt_secret, algorithms=["HS256"])
-    user_id = token_dec['id']
+# Assumes public key field in payload: user.jwt_pk_payload()
+@app.route('/api/auth/insec_verify_token/<token>', methods = ['GET'])
+def insec_verify_token(token):
+    token_info = token.split('.')
+    header = json.loads(base64.b64decode(token_info[0]).decode('UTF-8'))
+    payload = json.loads(base64.b64decode(token_info[1]).decode('UTF-8'))
+    user_id = -1
+    if header['alg'] == 'none':
+        if header['typ'] == 'JWT' and RS256_PUB_KEY == payload['pk']:
+            user_id = payload['id']
+    elif header['alg'] == 'RS256' and RS256_PUB_KEY == payload['pk']:
+        try:
+            token_dec = jwt.decode(token, RS256_PUB_KEY, algorithms=['RS256'])
+            user_id = token_dec['id']
+        except:
+            return jsonify({"authentication_error": "Error authenticating user"}), 403
+    elif header['alg'] == 'HS256':
+        try:
+            token_dec = jwt.decode(token, HS256_SECRET, algorithms=['HS256'])
+            user_id = token_dec['id']
+        except:
+            return jsonify({"authentication_error": "Error authenticating user"}), 403
+    
     user = User.query.filter_by(id=user_id).first()
-    if user is None:
+    if user is None or user.role != payload['role']:
         jsonify({"message": "User not found"}), 401
-    return jsonify(token_dec), 200
+    return jsonify({"user": user.to_dict()}), 200
+
+# JWT Introduction - Generate fresh public key token
+# ---
+# Generates fresh token with user.jwt_pk_payload() as payload
+@app.route('/api/auth/gen_pk_token/<user_id>', methods = ['GET'])
+def gen_pk_token(user_id, exp_in = 3600):
+    user = User.query.filter_by(id=user_id).first()
+    now = datetime.now()
+    user.token_exp = now + timedelta(seconds=exp_in)
+    user.token = jwt.encode(
+        user.jwt_pk_payload(),
+        RS256_PRV_KEY,
+        'RS256'
+    )
+    db.session.flush()
+    db.session.commit()
+    return jsonify({"token": user.token}), 200
 
 @app.route('/api/auth/gen_token/<user_id>', methods = ['GET'])
 def gen_token(user_id, exp_in = 3600):
     user = User.query.filter_by(id=user_id).first()
     now = datetime.now()
-    if user.token and user.token_exp > now + timedelta(seconds=60):
-        return jsonify({"token": user.token}), 200
+    # if user.token and user.token_exp > now + timedelta(seconds=60):
+    #     return jsonify({"token": user.token}), 200
     user.token_exp = now + timedelta(seconds=exp_in)
     user.token = jwt.encode(
         user.jwt_payload(),
-        jwt_secret
+        HS256_SECRET
     )
     db.session.flush()
     db.session.commit()

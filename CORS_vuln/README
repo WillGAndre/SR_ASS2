@@ -12,7 +12,6 @@ CORS_vuln:
             js input as a GET or POST. The attacker then
             inserts malicious requests to the API as js in the input.
 
-            TODO:
                 # Directory Transversal: Simply downloads files (Attacker-->get env variables, jwt secret key)
                 #   Query Arg: filename
                 #   Insecure - Doesnt verify file ext
@@ -35,3 +34,7 @@ CORS_vuln:
                             (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection)
 
     (https://github.com/ShiftLeftSecurity/flask-webgoat)
+
+    ---
+
+    TODO: static_xss.html -> download api files, attacker goal: get auth files (private key)

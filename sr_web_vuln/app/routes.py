@@ -3,12 +3,12 @@ import os
 from datetime import datetime
 
 import requests
-from flask import flash, jsonify, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, url_for, send_from_directory, send_file
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 
 from app import app, db
-from app.cors import _corsify_reflect, _corsify_whitelist, _corsify_regex_whitelist, _corsify_static_xss
+from app.cors import _corsify_reflect, _corsify_whitelist, _corsify_regex_whitelist
 from app.auth import (basic_auth, gen_token, token_auth, verify_password,
                       verify_token, ws_auth_verify_password,
                       ws_auth_verify_token)
@@ -101,6 +101,28 @@ def uploader():
 @app.route('/display/<filename>')
 def display(filename):
     return redirect(url_for('static', filename='uploads/'+filename), code=301)
+
+# Example:
+# http --raw '{"path": "../README"}' http://127.0.0.1:5000/download
+# https://stackoverflow.com/questions/38252955/flask-when-to-use-send-file-send-from-directory/38262406
+@app.route('/download', methods = ['POST', 'OPTIONS'])
+def download():
+    if request.method == 'OPTIONS':
+        cors_opts = {'result': 'Success'}
+        response = jsonify(cors_opts)
+        response.headers.add('Access-Control-Allow-Origin', str(request.headers['Origin']))
+        response.headers.add('Access-Control-Allow-Methods', 'DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT')
+        response.headers.add('Access-Control-Allow-Headers', 'content-type')
+        return response
+    # Insecure: Doesn't parse path
+    path = request.get_json()['path']
+    print(path)
+    response = send_file(path, as_attachment=True)
+    _corsify_reflect(request, response)
+    return response
+    # Secure: send_from_dir --> does parsing of path before sending file
+    # full_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+    # return send_from_directory(full_path, filename)
 
 @app.route('/subscribe')
 def subscribe():
@@ -326,7 +348,7 @@ def get_my_blog_posts(user_id):
     result = posts_schema.dump(all_posts)
     response = jsonify(result)
     # CORS Methods:
-    _corsify_reflect(request, response)
+    #_corsify_reflect(request, response)
     #_corsify_whitelist(request, response)
     #_corsify_regex_whitelist(request, response)
     return response, 200
