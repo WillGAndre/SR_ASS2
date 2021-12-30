@@ -65,16 +65,12 @@ def check_password(username, password):
 
 token_auth = HTTPTokenAuth()
 
+# For insecure verification:
+# call insec_verify_token
 @token_auth.verify_token
 def verify_token(token):
     user = User.query.filter_by(token=token).first()
     if user is None or user.token_exp < datetime.utcnow():
-        return None
-    token = jwt.encode(
-        user.jwt_payload(),
-        HS256_SECRET
-    )
-    if token != user.token:
         return None
     return user
 
@@ -101,31 +97,43 @@ def check_token(token):
 # JWT Introduction - Insecure auth method
 # ---
 # Assumes public key field in payload: user.jwt_pk_payload()
+#  
+#  TODO:
+#     - Use this method to set faulty tokens (before accessing admin page in XSS attack)
+#       By doing this he is able to exploit the system using the 'admin' role (and their page)
 @app.route('/api/auth/insec_verify_token/<token>', methods = ['GET'])
 def insec_verify_token(token):
     token_info = token.split('.')
     header = json.loads(base64.b64decode(token_info[0]).decode('UTF-8'))
     payload = json.loads(base64.b64decode(token_info[1]).decode('UTF-8'))
     user_id = -1
+    user_role = ''
     if header['alg'] == 'none':
         if header['typ'] == 'JWT' and RS256_PUB_KEY == payload['pk']:
             user_id = payload['id']
+            user_role = payload['role']
     elif header['alg'] == 'RS256' and RS256_PUB_KEY == payload['pk']:
         try:
             token_dec = jwt.decode(token, RS256_PUB_KEY, algorithms=['RS256'])
             user_id = token_dec['id']
+            user_role = token_dec['role']
         except:
             return jsonify({"authentication_error": "Error authenticating user"}), 403
     elif header['alg'] == 'HS256':
         try:
             token_dec = jwt.decode(token, HS256_SECRET, algorithms=['HS256'])
             user_id = token_dec['id']
+            user_role = token_dec['role']
         except:
             return jsonify({"authentication_error": "Error authenticating user"}), 403
     
     user = User.query.filter_by(id=user_id).first()
-    if user is None or user.role != payload['role']:
+    if user is None or user_role == '':
         jsonify({"message": "User not found"}), 401
+    user.role = user_role
+    user.token = token
+    db.session.flush()
+    db.session.commit()
     return jsonify({"user": user.to_dict()}), 200
 
 # JWT Introduction - Generate fresh public key token

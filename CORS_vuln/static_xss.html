@@ -37,7 +37,7 @@
             function add_comment() {
                 let filename = document.getElementById("search_body").value
                 let data = {
-                    "path": filename
+                    "path": 'static/uploads/'+filename
                 }
                 console.log(data)
                 fetch('http://127.0.0.1:5000/download', {

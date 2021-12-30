@@ -2,7 +2,7 @@ import re
 
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
-# CORS FUNCTIONS: static.html
+# CORS FUNCTIONS: static.html + static_xss.html
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 
@@ -11,6 +11,11 @@ import re
 
 CORS_WHITELIST = ['*', 'null', 'localhost']
 CORS_REGEX_WHITELIST = [r'http://127.0.0.1:5000/api/.*', r'http://127.0.0.1:5000/.*', r'.*/api/.*', r'.*']
+
+# Simplest method: Used in /blog_posts (XSS)
+def _corsify_any(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 def _corsify_reflect(request, response):
     response.headers.add('Access-Control-Allow-Origin', str(request.headers['Origin']))
