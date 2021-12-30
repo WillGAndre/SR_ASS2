@@ -1,0 +1,10 @@
+JWT vuln:
+    public/private keys --> app/auth
+
+    1. CVE-2018-0114 -> Doesn't work anymore due to exception patch
+    2. Modify algorithm to none:
+
+        Auth/API missconfigure: Doesn't verify signature only payload and header.
+                                So, by receiving a token that only has a header (with
+                                algorithm None) and payload, the auth server will only
+                                verifies these values.

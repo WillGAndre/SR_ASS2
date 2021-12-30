@@ -1,11 +1,40 @@
 CORS_vuln:
-    To enable CORS there are two possible methods:
+    CORS insecure methods can be found in app.cors.
+    These methods were designed insecurely on purpose,
+    when indicating solutions, refer which method is more secure
+    (reflect is the least secure). For better security whitelists
+    should be tighter, including regex.
 
-        1. Add ` response.headers.add('Access-Control-Allow-Origin', 'null' / '*') ` to 
-        jsonify response returned by the API.
+    Cross-site scripting (XSS) via CORS:
 
-        2. Import flask_cors and add:
-            cors = CORS(app, resources={r"/api/*": {"origins": "localhost"}})
-        then add @cross_origin() to route that should be enabled cors.
+            Create static html page which is susceptible 
+            to XSS. The static html page must allow inline/normal 
+            js input as a GET or POST. The attacker then
+            inserts malicious requests to the API as js in the input.
 
-        - https://stackoverflow.com/questions/26980713/solve-cross-origin-resource-sharing-with-flask
+                # Directory Transversal: Simply downloads files (Attacker-->get env variables, jwt secret key)
+                #   Query Arg: filename
+                #   Insecure - Doesnt verify file ext
+                #   Secure - Verify file ext or directory ext (regex,..)
+    
+         CORS             JS
+    API  ----   static   ----  A
+     |
+    WS
+     |
+     C
+
+             --> Should only get user info: Post Count
+            /
+    A <--> Static <-> API requests
+       JS    
+
+    Attacker Goal: Get POSTS from user (public/private)
+    Content-Security-Policy (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy)
+                            (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection)
+
+    (https://github.com/ShiftLeftSecurity/flask-webgoat)
+
+    ---
+
+    TODO: static_xss.html -> download api files, attacker goal: get auth files (private key)

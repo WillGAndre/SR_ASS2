@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>  
+        <title>Static XSS</title>
+    </head>
+    <body>
+        <header>
+            <h1>PostMyPost Info</h1>
+        </header>
+        <input id="username" type="text" placeholder="Search user" autocomplete="off" />
+        <input id="get_input" type="submit" value="Search users"/>
+        <script>
+            document.getElementById("get_input").onclick = get_user;
+    
+            function get_user() {
+                let username = document.getElementById("username").value
+                fetch('http://127.0.0.1:5000/api/blog_posts/'+username)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(res_json) {
+                    console.log(res_json)
+                    let num_posts = res_json.length
+                    let username = res_json[0]['username']
+                    let user_info = 'User: '+username+'\nPost count including private posts: '+num_posts+'\n'
+                    let first_post_info = 'First Post:\n\t'+res_json[0]['title']+':\n\t\t'
+                        + res_json[0]['body'] + '\n\tDate Published: ' + res_json[0]['date']
+                    document.getElementById("user_info").innerText = user_info + '\n' + first_post_info 
+                });
+            }
+        </script>
+        <input id="search_body" type="text" placeholder="File name" autocomplete="off" />
+        <input id="search_input" type="submit" value="Download user img/info"/>
+        <script>
+            document.getElementById("search_input").onclick = add_comment;
+
+            function add_comment() {
+                let filename = document.getElementById("search_body").value
+                let data = {
+                    "path": 'static/uploads/'+filename
+                }
+                console.log(data)
+                fetch('http://127.0.0.1:5000/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(function(response) {
+                    print(response)
+                    return response
+                })
+            }
+        </script>
+        <p id="user_info"></p>
+    </body>
+</html>
