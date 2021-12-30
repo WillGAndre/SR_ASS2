@@ -186,15 +186,15 @@ def gen_insecure_token(user_id, exp_in = 3600):
     
     token = jwt.encode(
         payload,
-        jwt_secret
+        HS256_SECRET
     )
     return jsonify({"token": token}), 200
 
 
-#INSECURE: validate jwt token based on user_id -> return user role
+# INSECURE: validate jwt token based on user_id -> return user role
 @app.route('/api/auth/check_inscure_token/<token>', methods = ['GET'])
 def check_inscure_token(token):
-    token_dec = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    token_dec = jwt.decode(token, HS256_SECRET, algorithms=["HS256"])
     user_id = token_dec['id']
     user = User.query.filter_by(id=user_id).first()
     
