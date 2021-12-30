@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if posts[0] is not defined %}
+    <div class="container">
+        <h1 class="card-title">No posts yet</h1>
+        <br>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "success" %}  
+                    <div class="alert alert-{{category}}">
+                        <b>Success: </b>{{ message }}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <b>Error: </b>{{ message }}
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    
+    {% else %}
+    <div class="container">
+        <h1>All posts from users</h1>
+        <br>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "success" %}  
+                    <div class="alert alert-{{category}}">
+                        <b>Success: </b>{{ message }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <b>Error: </b>{{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="col">
+                <div class="card-rows">
+                {% for post in posts %}
+                    <div class="card border-dark h-auto" style="max-height: 50rem; min-width: 18rem;">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                Title: {{post.title}}
+                            </h4>
+                            <p class="card-text">
+                                {% if post.edited == "yes" %}
+                                (Edited)
+                                {% endif%}
+                                <br>
+                                {{post.body}}
+                            </p>
+                            <p class="card-text">
+                                Author: {{post.username}}
+                                <br>
+                                Date: {{post.date}}
+                            </p>
+                            <button
+                                class="btn btn-danger w-100 m-1"
+                                type="button"
+                                onclick="window.location.href='{{ url_for('post_delete', id=post.id) }}';">
+                                Delete Post
+                            </button>
+                        </div>
+                    </div>
+                    <br>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+      </div>
+      {% endif %}
+
+
+
+{% endblock %}

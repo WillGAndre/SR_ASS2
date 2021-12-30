@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "success" %}  
+                    <div class="alert alert-{{category}}">
+                        <b>Success: </b>{{ message }}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <b>Error: </b>{{ message }}
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <a href="{{ url_for('all_posts_admin') }}" class="btn btn-primary text-white btn-user" style="float: left; margin-right: 10%">
+        All Blog Posts
+    </a>
+
+
+{% endblock %}
