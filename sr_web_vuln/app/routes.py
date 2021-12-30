@@ -13,8 +13,9 @@ from app.auth import (basic_auth, gen_token, token_auth, verify_password,
                       verify_token, ws_auth_verify_password,
                       ws_auth_verify_token)
 from app.errors import forbidden
-from app.forms import LoginForm, PostCreation, PostEdit, RegistrationForm
+from app.forms import LoginForm, PostCreation, PostEdit, RegistrationForm, ChangePasswordForm
 from app.models import BlogPost, PostSchema, User
+#from sr_web_vuln.app import auth
 
 api_url = "http://127.0.0.1:5000/"
 post_schema = PostSchema()
@@ -34,7 +35,7 @@ def favicon():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('explore'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -48,7 +49,7 @@ def login():
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('index')
+            next_page = url_for('explore')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
@@ -60,11 +61,26 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('explore'))
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(username=form.username.data, role='default')
         user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
+# Created just to be able to test the jwt vulnerable endpoint
+@app.route('/register_admin', methods=['GET', 'POST'])
+def register_admin():
+    if current_user.is_authenticated:
+        return redirect(url_for('explore'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, role='default')
+        user.set_password(form.password.data)
+        user.set_role("admin")
         db.session.add(user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -132,6 +148,45 @@ def subscribe():
     db.session.commit()
     return redirect(url_for('user', username=current_user.username), code=301)
 
+# insecure method -> allows any user to change someone's password
+# Does not verify the current password
+# Any user can access method by changing <username> - IDOR
+# This can lead to privilege escalation
+@app.route('/change_password/<username>', methods=['GET', 'POST'])
+def change_password(username):
+    
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=username).first_or_404()
+        user.set_password(form.password.data)
+
+        db.session.commit()
+        return redirect(url_for('user', username=username))
+    return render_template('change_password.html', form=form)
+
+
+# admin page
+@app.route('/admin')
+def admin():
+    
+    try:
+        authorization = request.headers.get("Authorization")
+        if(authorization == None):
+            return render_template('404.html')
+        
+        auth_token = str(authorization[7:])
+
+        response = requests.get(api_url + "api/auth/check_inscure_token/" + auth_token)
+        response_json = response.json()
+
+        if(response_json['role'] == "admin"):
+            return render_template("admin_control.html")
+        else:
+            return render_template('404.html')
+    except Exception:
+        return render_template('404.html')
+
+
 #----------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------
 # WEB SERVER: BLOG POST RELATED ROUTES
@@ -175,6 +230,31 @@ def my_posts():
         return render_template('404.html')
 
     return render_template("my_posts.html", posts=posts_array)
+
+
+# GET request to API for all blog posts (admin)
+# admins have special access to all blog posts
+# for this method to work the Referer in the header must be /admin, verifying the current user is admin and comes from admin page
+@app.route('/all_posts_admin')
+def all_posts_admin():
+    posts_array = []
+
+    try:
+        referer = request.headers.get("Referer")
+        if(referer != "http://127.0.0.1:5000/admin"):
+            return render_template('404.html')
+        
+        response = requests.get(api_url + "api/blog_posts_admin")
+        response_json = response.json()
+        for post_json in response_json:
+            post = BlogPost()
+            post.from_dict(post_json)
+            posts_array.append(post)      
+    except Exception:
+        return render_template('404.html')
+
+    return render_template("admin_all_posts.html", posts=posts_array)
+
 
 # POST request to API to create new post
 @app.route('/create_post',  methods=['GET', 'POST'])
@@ -353,4 +433,14 @@ def get_my_blog_posts(user_id):
     #_corsify_reflect(request, response)
     #_corsify_whitelist(request, response)
     #_corsify_regex_whitelist(request, response)
+    return response, 200
+
+# get all blog posts (private and public) (admin)
+@app.route("/api/blog_posts_admin/", methods=["GET"])
+# @cross_origin()
+def get_all_blog_posts_admin():
+    all_posts = BlogPost.query.all()
+    result = posts_schema.dump(all_posts)
+    response = jsonify(result)
+    # response.headers.add('Access-Control-Allow-Origin', 'null') # '*'
     return response, 200

@@ -1,3 +1,4 @@
+#from flask.app import Flask
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
@@ -31,3 +32,8 @@ class PostEdit(FlaskForm):
     body = StringField('Content...', validators=[DataRequired()])
     visibility = StringField('Public or Private', validators=[DataRequired()])
     submit = SubmitField('Register')
+    
+class ChangePasswordForm(FlaskForm):
+    password = PasswordField('Password', validators=[DataRequired()])
+    password2 = PasswordField(
+        'Repeat Password', validators=[DataRequired(), EqualTo('password')])

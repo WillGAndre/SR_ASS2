@@ -175,6 +175,36 @@ def revoke_token_from_user(user_id):
     return jsonify({"message": "Token revoked"})
 
 
+# INSECURE: create jwt token based on passed user_id
+@app.route('/api/auth/gen_insecure_token/<user_id>', methods = ['GET'])
+def gen_insecure_token(user_id, exp_in = 3600):
+    # ex: create token with admin user_id, but then allow an attacker to use this token
+
+    now = datetime.now()
+    token_exp = now + timedelta(seconds=exp_in)
+    payload = {"id": user_id, "exp": token_exp}
+    
+    token = jwt.encode(
+        payload,
+        jwt_secret
+    )
+    return jsonify({"token": token}), 200
+
+
+#INSECURE: validate jwt token based on user_id -> return user role
+@app.route('/api/auth/check_inscure_token/<token>', methods = ['GET'])
+def check_inscure_token(token):
+    token_dec = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+    user_id = token_dec['id']
+    user = User.query.filter_by(id=user_id).first()
+    
+    if user is None:
+        jsonify({"message": "User not found"}), 401
+    
+    print(user.role)
+    
+    return jsonify({"role" : user.role}), 200
+
 # @app.route('/tokens', methods = ['POST'])
 # @basic_auth.login_required
 # def get_token():
