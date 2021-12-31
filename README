@@ -1,0 +1,41 @@
+SR:ASS2:BAC_PA:
+
+    1- Install all modules and dependencies (check venv for modules list, requirements.txt is out of date)
+    2- Under /sr_web_vuln, RUN: flask run (check README file)
+
++   ---   +
+
+Scenario Steps:
+    NOTE: ALL ROUTES ARE RELATIVE TO (/app/routes.py) 
+
+IDOR + Privilege escalation vulnerabilities:
+	change_password route (L156) 
+
+Referrer-based access control + Privilege escalation:
+	The route /all_post_admin, depends on the Referer header.
+	This field must have the value 'http://127.0.0.1:5000/admin'
+
+JWT Introduction – None algorithm / Considerations:
+	To generate token, route: gen_pk_token()
+	To validate (insecure), route: insec_verify_token
+
+JWT faulty gen/validation:
+	(To create admin acc, goto route: /register_admin)
+	Admin page (route: /admin) depends on faulty token
+	gen/validation.
+	To gen faulty token route: /gen_insecure_token
+	To validate faulty token route: /check_inscure_token
+
+CORS misconfigures:
+	File -> cors.py
+	ex route with cors: /blog_posts
+
+CORS XSS + JWT exploit / Privilege escalation:
+	static_xss.html --> Directory Transversal to get private auth key
+	With private key --> attacker runs his own encode jwt token with private key
+	With forged token --> call route: /insec_verify_token to change user role
+			      call route: /admin to gain access
+
+	Other Vulns:
+		- Directory Transversal of routes in Search user input (ex: '../blog_posts')
+		- Pure XSS exploit in notes input/div (ex1: '<img src=1 onerror=alert(document.domain)>' , ex2: '<img src=1 onerror=alert(fetch('http://127.0.0.1:5000/api/blog_posts/1'))>')

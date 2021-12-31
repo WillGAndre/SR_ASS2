@@ -32,9 +32,9 @@
         <input id="search_body" type="text" placeholder="File name" autocomplete="off" />
         <input id="search_input" type="submit" value="Download user img/info"/>
         <script>
-            document.getElementById("search_input").onclick = add_comment;
+            document.getElementById("search_input").onclick = get_image;
 
-            function add_comment() {
+            function get_image() {
                 let filename = document.getElementById("search_body").value
                 let data = {
                     "path": 'static/uploads/'+filename
@@ -54,5 +54,17 @@
             }
         </script>
         <p id="user_info"></p>
+        <input id="note" type="text" placeholder="Leave a note" autocomplete="off" />
+        <input id="add_note" type="submit" value="Submit note" />
+        <div id="note_body"></div>
+        <script>
+            document.getElementById("add_note").onclick = add_note;
+
+            function add_note() {
+                let note_content = document.getElementById("note").value
+                console.log(note_content)
+                document.getElementById("note_body").innerHTML = note_content
+            }
+        </script>
     </body>
 </html>

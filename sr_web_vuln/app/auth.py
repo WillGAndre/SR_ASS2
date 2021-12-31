@@ -94,13 +94,9 @@ def check_token(token):
         return jsonify({"user": None}), 401
     return jsonify({"user": user.to_dict()}), 200
 
-# JWT Introduction - Insecure auth method
+# JWT Introduction - Insecure auth method (ONLY USED IN XSS EXAMPLE)
 # ---
 # Assumes public key field in payload: user.jwt_pk_payload()
-#  
-#  TODO:
-#     - Use this method to set faulty tokens (before accessing admin page in XSS attack)
-#       By doing this he is able to exploit the system using the 'admin' role (and their page)
 @app.route('/api/auth/insec_verify_token/<token>', methods = ['GET'])
 def insec_verify_token(token):
     token_info = token.split('.')
@@ -180,10 +176,13 @@ def revoke_token_from_user(user_id):
 def gen_insecure_token(user_id, exp_in = 3600):
     # ex: create token with admin user_id, but then allow an attacker to use this token
 
+    user = User.query.filter_by(id=user_id).first()
+    if user is None:
+        jsonify({"message": "User not found"}), 401
     now = datetime.now()
     token_exp = now + timedelta(seconds=exp_in)
-    payload = {"id": user_id, "exp": token_exp}
-    
+    payload = user.jwt_payload()
+    payload['exp'] = token_exp
     token = jwt.encode(
         payload,
         HS256_SECRET
@@ -192,6 +191,7 @@ def gen_insecure_token(user_id, exp_in = 3600):
 
 
 # INSECURE: validate jwt token based on user_id -> return user role
+# USED BY ADMIN PA
 @app.route('/api/auth/check_inscure_token/<token>', methods = ['GET'])
 def check_inscure_token(token):
     token_dec = jwt.decode(token, HS256_SECRET, algorithms=["HS256"])
@@ -204,17 +204,3 @@ def check_inscure_token(token):
     print(user.role)
     
     return jsonify({"role" : user.role}), 200
-
-# @app.route('/tokens', methods = ['POST'])
-# @basic_auth.login_required
-# def get_token():
-#     token = basic_auth.current_user().get_token()
-#     db.session.commit()
-#     return jsonify({"token": token})
-
-# @app.route('/tokens', methods=['DELETE'])
-# @token_auth.login_required
-# def revoke_token():
-#     token_auth.current_user().revoke_token()
-#     db.session.commit()
-#     return '', 204

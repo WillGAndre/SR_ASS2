@@ -168,7 +168,6 @@ def change_password(username):
 # admin page
 @app.route('/admin')
 def admin():
-    
     try:
         authorization = request.headers.get("Authorization")
         if(authorization == None):
@@ -330,7 +329,6 @@ def post_update(id):
 
 # DELETE request to API to delete post
 @app.route('/post_delete/<id>')
-@login_required
 def post_delete(id):
 
     # check if user can do this
@@ -418,8 +416,10 @@ def delete_blog_post(blog_post_id):
 def get_public_blog_posts():
     all_public_posts = BlogPost.query.filter_by(visibility='public')
     result = posts_schema.dump(all_public_posts)
-    
-    return jsonify(result), 200
+    response = jsonify(result)
+    # CORS Method: Must be active for XSS attack
+    # _corsify_any(response)
+    return response, 200
 
 # get all blog posts from user (private and public)
 # CORS route
@@ -437,10 +437,10 @@ def get_my_blog_posts(user_id):
 
 # get all blog posts (private and public) (admin)
 @app.route("/api/blog_posts_admin/", methods=["GET"])
-# @cross_origin()
 def get_all_blog_posts_admin():
     all_posts = BlogPost.query.all()
     result = posts_schema.dump(all_posts)
     response = jsonify(result)
-    # response.headers.add('Access-Control-Allow-Origin', 'null') # '*'
+    # CORS Method: Must be active for XSS attack
+    # _corsify_any(response)
     return response, 200

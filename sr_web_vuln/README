@@ -13,5 +13,3 @@ Commit changes to db (sync) -> flask db upgrade
 Open flask app shell (with imports) -> flask shell
 
                     *---*
-
-https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
