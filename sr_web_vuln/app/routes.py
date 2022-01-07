@@ -121,7 +121,7 @@ def display(filename):
 # Example:
 # http --raw '{"path": "../README"}' http://127.0.0.1:5000/download
 # https://stackoverflow.com/questions/38252955/flask-when-to-use-send-file-send-from-directory/38262406
-@app.route('/download', methods = ['POST', 'OPTIONS'])
+@app.route('/api/download', methods = ['POST', 'OPTIONS'])
 def download():
     if request.method == 'OPTIONS':
         cors_opts = {'result': 'Success'}
@@ -168,6 +168,7 @@ def change_password(username):
 # admin page
 @app.route('/admin')
 def admin():
+    # Comment L172-187 and uncomment L188 for live demo 
     try:
         authorization = request.headers.get("Authorization")
         if(authorization == None):
@@ -184,6 +185,7 @@ def admin():
             return render_template('404.html')
     except Exception:
         return render_template('404.html')
+    # return render_template("admin_control.html")
 
 
 #----------------------------------------------------------------------------------------
@@ -418,7 +420,7 @@ def get_public_blog_posts():
     result = posts_schema.dump(all_public_posts)
     response = jsonify(result)
     # CORS Method: Must be active for XSS attack
-    # _corsify_any(response)
+    _corsify_any(response)
     return response, 200
 
 # get all blog posts from user (private and public)

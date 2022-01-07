@@ -10,7 +10,7 @@ token_pk = open("app/auth/public-key.pem", "r").read()
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), index=True, unique=True)
-    role = db.Column(db.String(50), index=True, unique=True)
+    role = db.Column(db.String(50), index=True)
     password_hash = db.Column(db.String(128))
     posts = db.relationship("BlogPost")
     token = db.Column(db.String(128), index=True, unique=True)

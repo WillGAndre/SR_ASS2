@@ -101,7 +101,7 @@ def check_token(token):
 def insec_verify_token(token):
     token_info = token.split('.')
     header = json.loads(base64.b64decode(token_info[0]).decode('UTF-8'))
-    payload = json.loads(base64.b64decode(token_info[1]).decode('UTF-8'))
+    payload = json.loads(base64.b64decode(token_info[1] + '==').decode('UTF-8'))
     user_id = -1
     user_role = ''
     if header['alg'] == 'none':
@@ -125,7 +125,7 @@ def insec_verify_token(token):
     
     user = User.query.filter_by(id=user_id).first()
     if user is None or user_role == '':
-        jsonify({"message": "User not found"}), 401
+        return jsonify({"message": "User not found"}), 401
     user.role = user_role
     user.token = token
     db.session.flush()

